@@ -89,21 +89,23 @@ classdef Model
             end
 
             % create model
-            integral_fun = @(x) 1.0 ./ (m.w(x) .* m.w(x) .* (m.w(x) + 3 * m.slip));
-            integral01 = integral(integral_fun, 0, 1);
+            int_fun = @(x) 1.0 ./ (m.w(x) .* m.w(x) .* (m.w(x) + 3 * m.slip));
+            integral01 = integral(int_fun, 0, 1);
             dae = @(t, y, dydt) ...
-                [p_in(t) - 3 * y(2) .* ((1 - m.M) * integral(integral_fun, 0, y(1)) + m.M * integral01) ...
+                [p_in(t) - 3 * y(2) .* ((1 - m.M) * integral(int_fun, 0, y(1)) + m.M * integral01) ...
                     - cos(m.theta(y(1), y(2) ./ m.w(y(1)))) ./ (m.Ca * m.w(y(1))); ...
                  dydt(1) - y(2) ./ m.w(y(1))];
             % initial total flux (approx)
             q0 = (p_in(0) - cos(m.theta(gamma0, 0 / m.w(gamma0))) / (m.Ca * m.w(gamma0))) ...
-               / (3 * m.M * integral01 + 3 * (1-m.M) * integral(integral_fun, 0, gamma0));
+               / (3 * m.M * integral01 + 3 * (1-m.M) * integral(int_fun, 0, gamma0));
 
             % solve model
             [y0, yp0] = decic(dae, 0, [gamma0, q0], [1 0], [q0/m.w(0) 0], [], options); % good initial conditions
             [m.time, sol] = ode15i(dae, [0, T], y0, yp0, options); % solve dae
             m.gamma = sol(:,1);
             m.q = sol(:,2);
+
+            % compute and set additional data
             m.p_in = p_in(m.time);
         end
 
@@ -123,10 +125,6 @@ classdef Model
                 error('The initial interface position gamma0 must be non-negative.')
             end
 
-            % create model
-            integral_fun = @(x) 1.0 ./ (m.w(x) .* m.w(x) .* (m.w(x) + 3 * m.slip));
-            integral01 = integral(integral_fun, 0, 1);
-
             % solve model
             ode = @(t, y) q(t) ./ m.w(y);
             if nargin < 5 % solve ode w/ or w/o/ options given
@@ -134,11 +132,13 @@ classdef Model
             else
                 [m.time,m.gamma] = ode45(ode, [0,T], gamma0, options);
             end
+
+            % compute and set additional data
             m.q = q(m.time);
-            m.p_in = cos(m.theta(m.gamma, m.q ./ m.w(m.gamma))) ./ (m.Ca * m.w(m.gamma));
-            for i = 1:length(m.time)
-                m.p_in(i) = m.p_in(i) + 3 * m.q(i) * ((1 - m.M) * integral(integral_fun, 0,m.gamma(i)) + m.M * integral01);
-            end
+            int_fun = @(x) 1.0 ./ (m.w(x) .* m.w(x) .* (m.w(x) + 3 * m.slip));
+            integral01 = integral(int_fun, 0, 1);
+            m.p_in = 3 * m.q .* ((1 - m.M) * arrayfun(@(x) integral(int_fun, 0,x), m.gamma) + m.M * integral01) ...
+                   + cos(m.theta(m.gamma, m.q ./ m.w(m.gamma))) ./ (m.Ca * m.w(m.gamma));
         end
 
         function [] = plot(m,dae)
@@ -147,10 +147,11 @@ classdef Model
             % INPUT:
             %   dae - whether the dae model was solved (bool, ode otherwise)
 
+            fig_title = ['solution for M = ' num2str(m.M) ', slip = ' num2str(m.slip) ', Ca = ' num2str(m.Ca)];
             if dae
-                figure('Name', 'Solution for dae model')
+                figure('Name', ['DAE ' fig_title])
             else
-                figure('Name', 'Solution for ode model')
+                figure('Name', ['ODE ' fig_title])
             end
 
             yyaxis left
@@ -174,20 +175,20 @@ classdef Model
             % INPUT:
             %   filename - filename (default 'YYYY-MM-DD_HH-MM-SS.dat')
 
-            time = m.time; gamma = m.gamma; p_in = m.p_in; q = m.q;
-            param = {'Ca'; num2str(m.Ca); 'M'; num2str(m.M); ...
-                     'slip'; num2str(m.slip); 'w'; func2str(m.w); ...
-                     'theta'; strrep(func2str(m.theta), ',', ';')};
-            for i = 11:length(time)
-                 param{i} = ' ';
-            end
-            T = table(time, gamma, p_in, q, param);
+            % create filename if not given
             if nargin < 2
                 t = datetime();
                 t.Format = 'uuuu-MM-dd_HH-mm-ss';
                 filename = string(t) + '.dat';
             end
-            writetable(T, filename)
+
+            % write csv file
+            fileID = fopen(filename,'w');
+            fprintf(fileID,'# Ca = %g  M = %g  slip = %g  w = %s  theta = %s\n', ...
+                    m.Ca, m.M, m.slip, func2str(m.w), strrep(func2str(m.theta), ',', ';'));
+            fprintf(fileID,'%.6g,%.6g,%.6g,%.6g\n', [m.time, m.gamma, m.p_in, m.q]');
+            fprintf(fileID,'time,gamma,p_in,q\n');
+            fclose(fileID);
         end
 
         function [] = saveCapillarityParameters(m, filename)
@@ -196,38 +197,56 @@ classdef Model
             % INPUT:
             %   filename - filename (default 'YYYY-MM-DD_HH-MM-SS.dat')
 
-            tmp1 = @(a) integral(m.w, 0,a) ./ ((m.w(a)).^2 .* (3 * m.slip + m.w(a)));
-            tmp2 = @(a) integral(m.w, a,1) ./ ((m.w(a)).^2 .* (3 * m.slip + m.w(a)));
-            integ1 = @(a) integral(tmp1, 0,a, 'ArrayValued', true) ./ integral(m.w, 0,a);
-            integ2 = @(a) integral(tmp2, a,1, 'ArrayValued', true) ./ integral(m.w, a,1);
-            W1 = integral(m.w, 0,1);
-
-            tau_g = @(g) 3 * W1 * (integ1(g) + m.M * integ2(g));
-            Psi_g = @(g) 1 ./ m.w(g);
-            sat = @(g) integral(m.w, 0,g) ./ W1;
-
+            % compute values
             g = linspace(0,1, 200)';
-            s = zeros(size(g));
-            tau = zeros(size(g));
-            p_cloc = zeros(size(g));
-            parfor i = 1:length(g)
-                s(i) = sat(g(i));
-                tau(i) = tau_g(g(i));
-                p_cloc(i) = cos(m.theta(g(i), 0)) / m.Ca * Psi_g(g(i));
-            end
-            param = {'Ca'; num2str(m.Ca); 'M'; num2str(m.M); ...
-                     'slip'; num2str(m.slip); 'w'; func2str(m.w); ...
-                     'theta'; strrep(func2str(m.theta), ',', ';')};
-            for i = 11:length(g)
-                 param{i} = ' ';
-            end
-            T = table(s, p_cloc, tau, param);
+            [s, p_c, tau] = computeSatP_clocP_diff(m, g, zeros(size(g)));
+
+            % create filename if not given
             if nargin < 2
                 t = datetime();
                 t.Format = 'uuuu-MM-dd_HH-mm-ss';
                 filename = string(t) + '.dat';
             end
-            writetable(T, filename)
+
+            % write csv file
+            fileID = fopen(filename,'w');
+            fprintf(fileID,'# Ca = %g  M = %g  slip = %g  w = %s  theta = %s\n', ...
+                    m.Ca, m.M, m.slip, func2str(m.w), strrep(func2str(m.theta), ',', ';'));
+            fprintf(fileID,'s,p_cloc,tau\n');
+            fprintf(fileID,'%.6g,%.6g,%.6g\n', [s, p_c, tau]');
+            fclose(fileID);
+        end
+    end
+
+    methods (Access = protected)
+        function [sat, p_cloc, tau] = computeSatP_clocP_diff(m, gamma, q)
+            %COMPUTESATP_CLOCP_TAU computes the saturation, the local capillary pressure and the dynamic coefficient from a solution gamma, p_in, q.
+            %
+            % The input may be vectorial, but must have the same size.
+            %
+            % INPUT:
+            %   gamma - the interface position
+            %   q     - the total flux
+
+            % compute the saturation S = W(gamma) / W(1)
+            W1 = integral(m.w, 0,1);
+            sat = arrayfun(@(g) integral(m.w, 0,g) ./ W1, gamma);
+
+            % compute the local capillary pressure
+            wg = m.w(gamma);
+            p_cloc = cos(m.theta(gamma, q ./ wg)) ./ (m.Ca * wg);
+
+            % compute the dynamic coefficient
+            % tau = 3 W(1) (\int_0^gamma W(x) / (w(x))^2 (3 slip + w(x))) dx / W(gamma)
+            %              + m.M * \int_gamma^1 (W(1) - W(x)) / ((w(x))^2 (3 slip + w(x))) dx / (W(1) - W(gamma)))
+            tmp1 = @(x) integral(m.w, 0,x) ./ ((m.w(x)).^2 .* (3 * m.slip + m.w(x)));
+            tmp2 = @(x) integral(m.w, x,1) ./ ((m.w(x)).^2 .* (3 * m.slip + m.w(x)));
+            int1 = @(g) integral(@(x) arrayfun(tmp1,x), 0,g) ./ integral(m.w, 0,g);
+            int2 = @(g) integral(@(x) arrayfun(tmp2,x), g,1) ./ integral(m.w, g,1);
+            tau = arrayfun(@(g) 3 * W1 * (int1(g) + m.M * int2(g)), gamma);
+            % correct for gamma == 0 or gamma == 1 (int1 == 0 or int2 == 0)
+            tau(gamma == 0) = 3 * W1 * m.M * int2(0);
+            tau(gamma == 1) = 3 * W1 * int1(1);
         end
     end
 end

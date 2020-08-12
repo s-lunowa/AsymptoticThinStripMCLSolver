@@ -31,7 +31,7 @@ for slip = [0, 0.025, 0.05, 1/6, 0.5] % slip length
     for M = [0, 1e-6, 0.1, 0.5, 1, 2] % viscosity ratio (fluid I/II)
         for Ca = [0.1, 0.25, 0.5, 1, 2] % capillary number
             % inlet pressure
-            p_tmp = 6 * (M + 1) / (slip + 1) + 1 / Ca;
+            p_tmp = 6 * (M + 1) / (slip + 1) + cos(theta(0,0)) / Ca;
             p_in = @(t) p_tmp * ones(size(t));
 
             % create model
@@ -73,7 +73,7 @@ for slip = [0, 0.025, 0.05, 1/6, 0.5] % slip length
     for M = [0, 1e-6, 0.1, 0.5, 1, 2] % viscosity ratio (fluid I/II)
         for Ca = [0.1, 0.25, 0.5, 1, 2] % capillary number
             % inlet pressure
-            p_tmp = 12 * (M + 1) / (slip + 1) + 1 / Ca;
+            p_tmp = 12 * (M + 1) / (slip + 1) + cos(theta(0,0)) / Ca;
             p_in = @(t) p_tmp * ones(size(t));
 
             % create model
@@ -100,14 +100,14 @@ function solve_and_save(m, p_in, q, gamma0, T, MaxStep, folder)
     else
         m1 = m.solveDAE(p_in, T, gamma0, options);
     end
-    m1.plot(true)
-    title(['DAE with M = ' num2str(m.M) ', \lambda = ' num2str(m.slip) ', Ca = ' num2str(m.Ca)])
+    %m1.plot(true)
+    %title(['DAE with M = ' num2str(m.M) ', \lambda = ' num2str(m.slip) ', Ca = ' num2str(m.Ca)])
     m1.saveSolution([folder '/dae_M' num2str(m.M) '_slip' num2str(m.slip) '_Ca' num2str(m.Ca) '.dat'])
 
     % Solve ode model
     options = odeset('MaxStep', MaxStep, 'RelTol',1e-3, 'AbsTol', 1e-6); % solver options
     m2 = m.solveODE(q, T, gamma0, options);
-    m2.plot(false)
-    title(['ODE with M = ' num2str(m.M) ', \lambda = ' num2str(m.slip) ', Ca = ' num2str(m.Ca)])
+    %m2.plot(false)
+    %title(['ODE with M = ' num2str(m.M) ', \lambda = ' num2str(m.slip) ', Ca = ' num2str(m.Ca)])
     m2.saveSolution([folder '/ode_M' num2str(m.M) '_slip' num2str(m.slip) '_Ca' num2str(m.Ca) '.dat'])
 end
