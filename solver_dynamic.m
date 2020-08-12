@@ -46,12 +46,6 @@ for eta = 0:0.25:1
     end
 end
 
-% folder to save solutions
-folder = 'constricted/dynamic/';
-if ~exist(folder, 'dir')
-   mkdir(folder)
-end
-
 %% Parameters for constant case
 T = 1; % final time
 NT = 100; % minimal number of time steps
@@ -104,14 +98,14 @@ function solve_and_save(m, p_in, q, gamma0, T, MaxStep, folder, eta)
     else
         m1 = m.solveDAE(p_in, T, gamma0, options);
     end
-    m1.plot(true)
-    title(['DAE with M = ' num2str(m.M) ', \lambda = ' num2str(m.slip) ', Ca = ' num2str(m.Ca) ', \eta = ' num2str(eta)])
+    %m1.plot(true)
+    %title(['DAE with M = ' num2str(m.M) ', \lambda = ' num2str(m.slip) ', Ca = ' num2str(m.Ca) ', \eta = ' num2str(eta)])
     m1.saveSolution([folder '/dae_M' num2str(m.M) '_slip' num2str(m.slip) '_Ca' num2str(m.Ca) '_eta' num2str(eta) '.dat'])
 
     % Solve ode model
     options = odeset('MaxStep', MaxStep, 'RelTol',1e-3, 'AbsTol', 1e-6); % solver options
     m2 = m.solveODE(q, T, gamma0, options);
-    m2.plot(false)
-    title(['ODE with M = ' num2str(m.M) ', \lambda = ' num2str(m.slip) ', Ca = ' num2str(m.Ca) ', \eta = ' num2str(eta)])
+    %m2.plot(false)
+    %title(['ODE with M = ' num2str(m.M) ', \lambda = ' num2str(m.slip) ', Ca = ' num2str(m.Ca) ', \eta = ' num2str(eta)])
     m2.saveSolution([folder '/ode_M' num2str(m.M) '_slip' num2str(m.slip) '_Ca' num2str(m.Ca) '_eta' num2str(eta) '.dat'])
 end

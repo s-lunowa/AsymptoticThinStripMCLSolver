@@ -34,6 +34,12 @@ classdef Model
         q       {mustBeNumeric}
         % The simulated time points
         time    {mustBeNumeric}
+        % The computed saturation
+        sat     {mustBeNumeric}
+        % The computed local capillary pressure
+        p_cloc  {mustBeNumeric}
+        % The computed intrinsic pressure difference
+        p_diff  {mustBeNumeric}
     end
 
     methods
@@ -107,6 +113,8 @@ classdef Model
 
             % compute and set additional data
             m.p_in = p_in(m.time);
+            [m.sat, m.p_cloc, tau] = computeSatP_clocP_diff(m, m.gamma, m.q);
+            m.p_diff = m.p_cloc + tau .* m.q / integral(m.w, 0,1);
         end
 
         function m = solveODE(m, q, T, gamma0, options)
@@ -135,10 +143,12 @@ classdef Model
 
             % compute and set additional data
             m.q = q(m.time);
+            [m.sat, m.p_cloc, tau] = computeSatP_clocP_diff(m, m.gamma, m.q);
+            m.p_diff = m.p_cloc + tau .* m.q / integral(m.w, 0,1);
             int_fun = @(x) 1.0 ./ (m.w(x) .* m.w(x) .* (m.w(x) + 3 * m.slip));
             integral01 = integral(int_fun, 0, 1);
             m.p_in = 3 * m.q .* ((1 - m.M) * arrayfun(@(x) integral(int_fun, 0,x), m.gamma) + m.M * integral01) ...
-                   + cos(m.theta(m.gamma, m.q ./ m.w(m.gamma))) ./ (m.Ca * m.w(m.gamma));
+                   + m.p_cloc;
         end
 
         function [] = plot(m,dae)
@@ -154,19 +164,30 @@ classdef Model
                 figure('Name', ['ODE ' fig_title])
             end
 
-            yyaxis left
-            plot(m.time,m.gamma)
-            xlabel('time t')
-            ylabel('\gamma(t)')
+            stackedplot(m.time, [m.gamma, m.p_in, m.q, m.sat, m.p_cloc, m.p_diff], ...
+                        'DisplayLabels',["gamma", "p_in", "q", "S", "p_cloc", "p_diff"])
+        end
 
-            yyaxis right
-            if(dae)
-                plot(m.time, m.q)
-                ylabel('q(t)')
-            else
-                plot(m.time, m.p_in)
-                ylabel('p_{in}(t)')
-            end
+        function [] = plot_p_diff_sat(m)
+            %PLOT plots the static p_c - sat and the (solution dependent) dynamic p_diff - sat curve in one figure.
+            %
+
+            figure('Name', ['p_diff - sat relation for M = ' num2str(m.M) ', slip = ' num2str(m.slip) ', Ca = ' num2str(m.Ca)])
+            % dynamic p_diff - s
+            plot(m.sat,m.p_diff)
+            hold on
+            % static p_c - s
+            g = linspace(0,1, 100);
+            % compute the saturation S = W(gamma) / W(1)
+            W1 = integral(m.w, 0,1);
+            s = arrayfun(@(g) integral(m.w, 0,g) ./ W1, g);
+            % compute the local capillary pressure
+            p_c = cos(m.theta(g, zeros(size(g)))) ./ (m.Ca * m.w(g));
+            plot(s, p_c)
+            hold off
+            legend('dyn. p_{diff}', 'static p_c')
+            xlabel('Saturation S')
+            xlim([0,1])
         end
 
         function [] = saveSolution(m, filename)
@@ -186,8 +207,9 @@ classdef Model
             fileID = fopen(filename,'w');
             fprintf(fileID,'# Ca = %g  M = %g  slip = %g  w = %s  theta = %s\n', ...
                     m.Ca, m.M, m.slip, func2str(m.w), strrep(func2str(m.theta), ',', ';'));
-            fprintf(fileID,'%.6g,%.6g,%.6g,%.6g\n', [m.time, m.gamma, m.p_in, m.q]');
-            fprintf(fileID,'time,gamma,p_in,q\n');
+            fprintf(fileID, 'time,gamma,p_in,q,s,p_cloc,p_diff\n');
+            fprintf(fileID, '%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g\n', ...
+                            [m.time, m.gamma, m.p_in, m.q, m.sat, m.p_cloc, m.p_diff]');
             fclose(fileID);
         end
 
