@@ -1,5 +1,6 @@
 function example()
-% EXAMPLE shows how to solve the DAE / ODE of the Model with dynamic contact angle model.
+% EXAMPLE shows how to solve the DAE / ODE of the Model with dynamic or
+% hysteretic contact angle model, respectively.
 % The solutions are plotted and saved for further usage.
 %
 % (c) 2020 Stephan B. Lunowa
@@ -8,6 +9,7 @@ function example()
 % You should have obtained a LICENCE file alongside this file.
 % To view a copy of this license, visit http://creativecommons.org/licenses/by/4.0/.
 
+%% We start with a dynamic contact angle model.
 % The model parameters need to be given first:
 
 % The wall function defines the shape of the thin strip.
@@ -90,4 +92,51 @@ pause
 if(isvalid(f1)); close(f1); end
 if(isvalid(f2)); close(f2); end
 
-end
+%% We continue with a hysteretic contact angle model.
+% All the parameters are the same as for the dynamic contact angle model,
+% except that you have to set zeta instead of theta.
+% Thus, we only set zeta here and use the other values from above.
+% However, we also need to change q and p_in to obtain a visible hysteresis cycle.
+
+% zeta is the inverse of cos(theta(x, .)), i.e. it returns the contact line
+% velocity for given 'capillary pressure'.
+% zeta must be a monotone function from [-1,1] into the real numbers.
+% A region where zeta is constant leads to hysteresis.
+zeta = @(x,p) min(p - 0.25, max(p - 0.5, 0)) ./ Ca;
+
+% create the model
+mh = ModelHysteretic(w, zeta, Ca, M, slip);
+
+% At this point, we can again compute the static p_c - s and tau - s curves and save them.
+mh.saveCapillarityParameters('example_pc-tau-sat2.dat')
+
+% Set the inlet pressure and total flux to vary.
+p_in = @(t) 1 + 30 * cos(pi * t);
+q = @(t) 2 - 4 * t;
+
+% Solve the dae and ode model
+%mhDAE = m.solveDAE(p_in, T, gamma0, optionsDAE);
+mhDAE = mh.solveDAE_explicit(p_in, T, gamma0, 100); % this is a fix since ode15i has issues
+mhODE = mh.solveODE(q, T, gamma0, optionsODE);
+
+% We save the solutions into the file 'example_solutionXXX2.dat'.
+mDAE.saveSolution('example_solutionDAE2.dat')
+mODE.saveSolution('example_solutionODE2.dat')
+
+% Plot the solutions.
+f1 = mhDAE.plot(true);
+f2 = mhODE.plot(false);
+
+% you need to manually continue here
+pause
+if(isvalid(f1)); close(f1); end
+if(isvalid(f2)); close(f2); end
+
+% Plot the pressure - saturation curves.
+f1 = mhDAE.plotPSat();
+f2 = mhODE.plotPSat();
+
+% you need to manually continue here
+pause
+if(isvalid(f1)); close(f1); end
+if(isvalid(f2)); close(f2); end
