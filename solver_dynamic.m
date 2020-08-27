@@ -23,6 +23,8 @@ dt = 1e-2;
 w = @(x) 2.0/3.0 + cos(2 * pi * x) / 3.0;
 % total flow
 q = @(t) 0.6667 * ones(size(t));
+% inlet pressure
+p_in = @(t) 12 * ones(size(t));
 % initial position of the interface
 gamma0 = 0;
 
@@ -33,19 +35,18 @@ if ~exist(folder, 'dir')
 end
 
 %% Solution process
-for eta = 0:0.25:1
+eta = 0:0.25:1; % dynamic contact angle coeff.
+%for i = 1:numel(eta)
+parfor i = 1:numel(eta)
     for slip = [0, 1/6] % slip length
         for M = [0.5, 1, 2] % viscosity ratio (fluid I/II)
             for Ca = [0.5, 1, 2] % capillary number
                 % contact angle function
-                theta = @(x, u) acos(min(1/2 + eta * Ca * u, ones(size(u))));
-                % inlet pressure
-                p_tmp = 5 * M / (1/2 + 3 * slip) + 3;
-                p_in = @(t) p_tmp * ones(size(t));
+                theta = @(x, u) acos(max(min(1/2 + eta(i) * Ca * u, 1), -1));
 
                 % create model, solve and save
                 m = Model(w, theta, Ca, M, slip);
-                solve_and_save(m, p_in, q, gamma0, T, dt, folder, eta)
+                solve_and_save(m, p_in, q, gamma0, T, dt, folder, eta(i))
             end
         end
     end
@@ -61,6 +62,8 @@ dt = 1e-2;
 w = @(x) ones(size(x));
 % total flow
 q = @(t) ones(size(t));
+% inlet pressure
+p_in = @(t) 3 * ones(size(t));
 % initial position of the interface
 gamma0 = 0;
 
@@ -71,19 +74,18 @@ if ~exist(folder, 'dir')
 end
 
 %% Solution process
-for eta = 0:0.25:1
+eta = 0:0.25:1; % dynamic contact angle coeff.
+%for i = 1:numel(eta)
+parfor i = 1:numel(eta)
     for slip = [0, 1/6] % slip length
         for M = [0.5, 1, 2] % viscosity ratio (fluid I/II)
             for Ca = [0.5, 1, 2] % capillary number
                 % contact angle function
-                theta = @(x, u) acos(min(1/2 + eta * Ca * u, ones(size(u))));
-                % inlet pressure
-                p_tmp = M / (1/2 + 3 * slip) + 1 / Ca;
-                p_in = @(t) p_tmp * ones(size(t));
+                theta = @(x, u) acos(max(min(1/2 + eta(i) * Ca * u, 1), -1));
 
                 % create model, solve and save
                 m = Model(w, theta, Ca, M, slip);
-                solve_and_save(m, p_in, q, gamma0, T, dt, folder, eta)
+                solve_and_save(m, p_in, q, gamma0, T, dt, folder, eta(i))
             end
         end
     end
@@ -96,10 +98,9 @@ function solve_and_save(m, p_in, q, gamma0, T, dtMax, folder, eta)
 
     % Solve dae model
     options = odeset('MaxStep', dtMax, 'RelTol',1e-3, 'AbsTol',[1e-6, 1e-7]); % solver options
-    if m.M < 1e-6 && gamma0 < 5e-2
-        m1 = m.solveDAE(p_in, T, 5e-2, options);
-    elseif gamma0 < 1e-3
-        m1 = m.solveDAE(p_in, T, 1e-3, options);
+    gammaMin = 1e-3;
+    if m.M < 1e-2 && gamma0 < gammaMin
+        m1 = m.solveDAE(p_in, T, gammaMin, options);
     else
         m1 = m.solveDAE(p_in, T, gamma0, options);
     end

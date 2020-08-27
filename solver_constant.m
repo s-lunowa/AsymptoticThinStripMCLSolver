@@ -1,11 +1,8 @@
-function solver_constricted
-% SOLVER_CONSTRICTED solves the DAE and ODE of the Model for a variety of parameter combinations.
+function solver_constant
+% SOLVER_CONSTANT solves the DAE and ODE of the Model for a variety of parameter combinations.
 % The chosen contact angle model is static.
 %
-% The wall functions considered are:
-%   * a 'constricted' case:      w(x) = 2/3 + cos(2 pi x)/3
-%   * a 'long constricted' case: w(x) = 2/3 + (cos(4 * pi * x)/3 if (x <= 0.25 or x >= 0.75)
-%                                     = 1/3 otherwise;
+% The wall function considered is constant w(x) = 1
 %
 % (c) 2020 Stephan B. Lunowa
 %
@@ -14,72 +11,36 @@ function solver_constricted
 % To view a copy of this license, visit http://creativecommons.org/licenses/by/4.0/.
 
 
-%% Parameters for constricted case
+%% Parameters
 % final time (too big for most simulations, so they will stop early)
-T = 2;
-% maximal time-step size
-dtMax = 1e-2;
-
-% wall function
-w = @(x) 2.0/3.0 + cos(2 * pi * x) / 3.0;
-% contact angle function
-theta = @(x, u) ones(size(x)) * (pi / 3);
-% initial position of the interface
-gamma0 = 0;
-% total flow
-q = @(t) ones(size(t));
-% inlet pressure
-p_in = @(t) 12 * ones(size(t));
-
-% folder to save solutions
-folder = 'constricted';
-if ~exist(folder, 'dir')
-   mkdir(folder)
-end
-
-%% Solution process
-M = [0, 1e-3, 0.1, 0.5, 1, 2]; % viscosity ratio (fluid I/II)
-%for i = 1:numel(M)
-parfor i = 1:numel(M)
-    for slip = [0, 0.025, 0.05, 1/6, 0.5] % slip length
-        for Ca = [0.1, 0.25, 0.5, 1, 2] % capillary number
-            % create, solve and save model
-            m = Model(w, theta, Ca, M(i), slip);
-            solve_and_save(m, p_in, q, gamma0, T, dtMax, folder)
-        end
-    end
-end
-
-%% Parameters for long constricted case
-% final time (too big for most simulations, so they will stop early)
-T = 2;
-% maximal time-step size
+T = 1.5;
+% maximal time step size
 dtMax = 1e-2;
 
 % total flow
 q = @(t) ones(size(t));
 % wall function
-w = @(x) 2.0/3.0 + (cos(4 * pi * x) .* (x <= 0.25 | x >= 0.75) - (0.25 < x) .* (x < 0.75)) / 3.0;
+w = @(x) ones(size(x));
 % contact angle function
 theta = @(x, u) ones(size(x)) * (pi / 3);
-
 % initial position of the interface
 gamma0 = 0;
 
 % folder to save solutions
-folder = 'constrictedLong';
+folder = 'constant';
 if ~exist(folder, 'dir')
    mkdir(folder)
 end
 
 %% Solution process
+
 M = [0, 1e-3, 0.1, 0.5, 1, 2]; % viscosity ratio (fluid I/II)
 %for i = 1:numel(M)
 parfor i = 1:numel(M)
-    for slip = [0, 0.025, 0.05, 1/6, 0.5] % slip length
+    for slip = [0, 0.05, 1/6, 0.5] % slip length
         for Ca = [0.1, 0.25, 0.5, 1, 2] % capillary number
             % inlet pressure
-            p_tmp = 12 * (M(i) + 1) / (slip + 1) + cos(theta(0,0)) / Ca;
+            p_tmp = 2 + cos(theta(0,0)) / Ca;
             p_in = @(t) p_tmp * ones(size(t));
 
             % create, solve and save model

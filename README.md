@@ -14,6 +14,9 @@ MATLAB&reg; is a product and trademark of MathWorks, Inc., which is available at
 
 ## Usage
 
+The file [example.m](example.m) shows in detail the usage of the different program components,
+such as solving the ode and dae system, plotting the solutions and saving them.
+
 The file [Model.m](Model.m) contains the model as a class with all routines necessary to simulate the process.
 The scripts [solver_constricted.m](solver_constricted.m) and [solver_dynamic.m](solver_dynamic.m)
 contain examples of usage for uniform and constricted thin strips with constant and dynamic contact angle model, respectively.

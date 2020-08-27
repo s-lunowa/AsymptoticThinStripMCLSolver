@@ -204,7 +204,7 @@ classdef ModelHysteretic
                 options = odeset();
             end
             options = odeset(options, 'Events', @ModelHysteretic.stopAtEnds);
-            
+
             % solve model
             ode = @(t, y) q(t) ./ m.w(y);
             [m.time,m.gamma] = ode45(ode, [0,T], gamma0, options);
@@ -337,7 +337,7 @@ classdef ModelHysteretic
                 integral01 = integral(int_fun, 0, 1);
                 p_cloc = p_in - q .* (integral01 + (m.M - 1) * arrayfun(@(g) integral(int_fun, g,1), gamma));
             end
-            
+
             % compute the dynamic coefficient
             % tau = 3 W(1) (\int_0^gamma W(x) / (w(x))^2 (3 slip + w(x))) dx / W(gamma)
             %              + m.M * \int_gamma^1 (W(1) - W(x)) / ((w(x))^2 (3 slip + w(x))) dx / (W(1) - W(gamma)))
