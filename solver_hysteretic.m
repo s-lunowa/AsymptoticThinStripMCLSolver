@@ -1,5 +1,5 @@
-function solver_hysteresis
-% SOLVER_HYSTERESIS solves the DAE and ODE of the Model for a variety of parameter combinations.
+function solver_hysteretic
+% SOLVER_HYSTERETIC solves the DAE and ODE of the ModelHysteretic for a variety of parameter combinations.
 % The chosen contact angle models are hysteretic, dynamic and static.
 %
 % The wall functions considered are:
@@ -35,7 +35,7 @@ theta_hyst = pi / 12;
 gamma0 = 0;
 
 % inlet pressure
-p_in = @(t) cos(theta_static)/Ca + 2 * (1 - t/2); % constant
+p_in = @(t) cos(theta_static)/Ca + 2 * (1 - t/2);
 
 % folder to save solutions
 folder = 'constant/hysteresis/';
@@ -83,8 +83,7 @@ theta_hyst = pi / 12;
 gamma0 = 0;
 
 % inlet pressure
-%p_in = @(t) cos(theta_static)/Ca + 6.25 * cos(pi/4 * t); % constant
-p_in = @(t) cos(theta_static)/Ca + 8 * (1 - t/2); % constant
+p_in = @(t) cos(theta_static)/Ca + 8 * (1 - t/2);
 
 % folder to save solutions
 folder = 'constricted/hysteresis/';

@@ -20,9 +20,9 @@ The file [example.m](example.m) shows in detail the usage of the different progr
 such as solving the ode and dae system, plotting the solutions and saving them.
 
 The file [Model.m](Model.m) contains the model as a class with all routines necessary to simulate the process.
-The scripts [solver_constricted.m](solver_constricted.m) and [solver_dynamic.m](solver_dynamic.m)
-contain examples of usage for uniform and constricted thin strips with constant and dynamic contact angle model, respectively.
-<!-- TODO extend description -->
+The scripts [solver_constant.m](solver_constant.m) and [solver_constricted.m](solver_constricted.m), [solver_dynamic.m](solver_dynamic.m),
+and [solver_hysteretic.m](solver_hysteretic.m) contain examples of usage for uniform and constricted thin strips with
+constant, dynamic and hysteretic contact angle model, respectively.
 
 ## License
 
