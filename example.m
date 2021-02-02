@@ -3,7 +3,7 @@ function example()
 % hysteretic contact angle model, respectively.
 % The solutions are plotted and saved for further usage.
 %
-% (c) 2020 Stephan B. Lunowa
+% (c) 2021 Stephan B. Lunowa
 %
 % This work is licensed under the Creative Commons Attribution 4.0 International License.
 % You should have obtained a LICENCE file alongside this file.

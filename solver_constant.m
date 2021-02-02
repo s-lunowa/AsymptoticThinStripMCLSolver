@@ -4,7 +4,7 @@ function solver_constant
 %
 % The wall function considered is constant w(x) = 1
 %
-% (c) 2020 Stephan B. Lunowa
+% (c) 2021 Stephan B. Lunowa
 %
 % This work is licensed under the Creative Commons Attribution 4.0 International License.
 % You should have obtained a LICENCE file alongside this file.

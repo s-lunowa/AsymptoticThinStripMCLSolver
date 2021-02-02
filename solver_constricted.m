@@ -7,7 +7,7 @@ function solver_constricted
 %   * a 'long constricted' case: w(x) = 2/3 + (cos(4 * pi * x)/3 if (x <= 0.25 or x >= 0.75)
 %                                     = 1/3 otherwise;
 %
-% (c) 2020 Stephan B. Lunowa
+% (c) 2021 Stephan B. Lunowa
 %
 % This work is licensed under the Creative Commons Attribution 4.0 International License.
 % You should have obtained a LICENCE file alongside this file.

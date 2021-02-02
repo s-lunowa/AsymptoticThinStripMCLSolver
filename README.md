@@ -26,7 +26,7 @@ contain examples of usage for uniform and constricted thin strips with constant 
 
 ## License
 
-Copyright &copy; 2020 Stephan B. Lunowa.
+Copyright &copy; 2021 Stephan B. Lunowa.
 
 This software is licensed under the Creative Commons Attribution 4.0 International License.
 You should have obtained a [LICENSE](LICENSE) file alongside this file.

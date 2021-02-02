@@ -6,7 +6,7 @@ function solver_hysteresis
 %   * a 'constant' case:    w(x) = 1
 %   * a 'constricted' case: w(x) = 2/3 + cos(2 pi x)/3
 %
-% (c) 2020 Stephan B. Lunowa
+% (c) 2021 Stephan B. Lunowa
 %
 % This work is licensed under the Creative Commons Attribution 4.0 International License.
 % You should have obtained a LICENCE file alongside this file.

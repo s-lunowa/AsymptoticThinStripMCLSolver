@@ -12,7 +12,7 @@ classdef Model
 %
 %   over time [0,T] with respect to gamma(0) == gamma0.
 %
-% (c) 2020 Stephan B. Lunowa
+% (c) 2021 Stephan B. Lunowa
 %
 % This software is licensed under the Creative Commons Attribution 4.0 International License.
 % You should have obtained a LICENCE file alongside this file.
