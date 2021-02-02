@@ -2,7 +2,9 @@
 
 Solver for the asymptotic model of immiscible two-phase flow with moving contact line in a thin strip.
 
-The solver is writen in MATLAB.
+The solver is writen in MATLAB. The model is derived in the article *On an averaged model for immiscible two-phase
+flow with surface tension and dynamic contact angle in a thin strip* by Stephan B. Lunowa, Carina Bringedal and
+Iuliu Sorin Pop (2021) ([UHasselt CMAT Preprint](http://www.uhasselt.be/Documents/CMAT/Preprints/2020/UP2006.pdf)).
 <!-- TODO extend description -->
 
 ## Installation

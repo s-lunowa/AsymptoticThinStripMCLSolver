@@ -339,16 +339,16 @@ classdef ModelHysteretic
             end
 
             % compute the dynamic coefficient
-            % tau = 3 W(1) (\int_0^gamma W(x) / (w(x))^2 (3 slip + w(x))) dx / W(gamma)
-            %              + m.M * \int_gamma^1 (W(1) - W(x)) / ((w(x))^2 (3 slip + w(x))) dx / (W(1) - W(gamma)))
+            % tau = 3 (W(1))^2 (\int_0^gamma W(x) / (w(x))^2 (3 slip + w(x))) dx / W(gamma)
+            %                  + m.M * \int_gamma^1 (W(1) - W(x)) / ((w(x))^2 (3 slip + w(x))) dx / (W(1) - W(gamma)))
             tmp1 = @(x) integral(m.w, 0,x) ./ ((m.w(x)).^2 .* (3 * m.slip + m.w(x)));
             tmp2 = @(x) integral(m.w, x,1) ./ ((m.w(x)).^2 .* (3 * m.slip + m.w(x)));
             int1 = @(g) integral(@(x) arrayfun(tmp1,x), 0,g) ./ integral(m.w, 0,g);
             int2 = @(g) integral(@(x) arrayfun(tmp2,x), g,1) ./ integral(m.w, g,1);
-            tau = arrayfun(@(g) 3 * W1 * (int1(g) + m.M * int2(g)), gamma);
+            tau = arrayfun(@(g) 3 * W1^2 * (int1(g) + m.M * int2(g)), gamma);
             % correct for gamma == 0 or gamma == 1 (int1 == 0 or int2 == 0)
-            tau(gamma == 0) = 3 * W1 * m.M * int2(0);
-            tau(gamma == 1) = 3 * W1 * int1(1);
+            tau(gamma == 0) = 3 * W1^2 * m.M * int2(0);
+            tau(gamma == 1) = 3 * W1^2 * int1(1);
         end
     end
 
